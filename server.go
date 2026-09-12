@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	message := "Hello, World!"
+	message := "OK\n"
 
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {

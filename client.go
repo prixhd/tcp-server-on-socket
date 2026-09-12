@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"io"
+	"log"
 	"net"
-	"os"
 )
 
 func main() {
@@ -17,6 +17,18 @@ func main() {
 
 	defer conn.Close()
 
-	io.Copy(os.Stdout, conn)
+	reader := bufio.NewReader(conn)
+	ans, err := reader.ReadString('\n')
+
+	if err != nil {
+		fmt.Println("Error reading from server:", err)
+		return
+	}
+
+	if ans != "OK\n" {
+		log.Fatal("Unexpected response from server:", ans)
+		return
+	}
+	fmt.Println("Received response from server:", ans)
 	fmt.Println("\nConnection closed.")
 }
