@@ -10,25 +10,29 @@ import (
 func main() {
 
 	conn, err := net.Dial("tcp", "localhost:8080")
+
 	if err != nil {
-		fmt.Println("Error connecting to server:", err)
-		return
+		log.Fatal("Error connecting to server:", err)
 	}
 
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal("Error closing connection:", err)
+		}
+	}()
 
 	reader := bufio.NewReader(conn)
 	ans, err := reader.ReadString('\n')
 
 	if err != nil {
-		fmt.Println("Error reading from server:", err)
-		return
+		log.Fatal("Error reading from server:", err)
 	}
 
 	if ans != "OK\n" {
 		log.Fatal("Unexpected response from server:", ans)
-		return
 	}
+
 	fmt.Println("Received response from server:", ans)
 	fmt.Println("\nConnection closed.")
 }

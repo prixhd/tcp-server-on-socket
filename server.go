@@ -11,7 +11,10 @@ func handleConn(conn net.Conn, message string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer conn.Close()
 
-	conn.Write([]byte(message))
+	_, err := conn.Write([]byte(message))
+	if err != nil {
+		log.Fatal("Error writing to connection:", err)
+	}
 }
 
 func main() {
@@ -27,6 +30,7 @@ func main() {
 	}
 
 	defer listener.Close()
+
 	fmt.Println("Server is listening on port 8080...")
 
 	for {
