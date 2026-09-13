@@ -4,17 +4,26 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 )
+
+func handleConn(conn net.Conn, message string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer conn.Close()
+
+	conn.Write([]byte(message))
+}
 
 func main() {
 
 	message := "OK\n"
 
+	var wg sync.WaitGroup
+
 	listener, err := net.Listen("tcp", ":8080")
+
 	if err != nil {
-		fmt.Println("Error starting server:", err)
-		log.Fatal(err)
-		return
+		log.Fatal("Error starting server:", err)
 	}
 
 	defer listener.Close()
@@ -22,12 +31,13 @@ func main() {
 
 	for {
 		conn, err := listener.Accept()
+
 		if err != nil {
 			fmt.Println("Error accepting connection:", err)
 			continue
 		}
 
-		conn.Write([]byte(message))
-		conn.Close()
+		wg.Add(1)
+		go handleConn(conn, message, &wg)
 	}
 }
