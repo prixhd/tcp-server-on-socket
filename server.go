@@ -5,15 +5,21 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 )
 
 func handleConn(conn net.Conn, message string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	defer conn.Close()
 
-	_, err := conn.Write([]byte(message))
+	err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	if err != nil {
-		log.Fatal("Error writing to connection:", err)
+		log.Fatal("Error setting write deadline:", err)
+	}
+
+	_, err = conn.Write([]byte(message))
+	if err != nil {
+		log.Fatal("Error writing to client:", err)
 	}
 }
 

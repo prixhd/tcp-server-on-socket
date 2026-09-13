@@ -5,11 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 func main() {
 
-	conn, err := net.Dial("tcp", "localhost:8080")
+	conn, err := net.DialTimeout(
+		"tcp",
+		"localhost:8080",
+		5*time.Second,
+	)
 
 	if err != nil {
 		log.Fatal("Error connecting to server:", err)
@@ -22,7 +27,13 @@ func main() {
 		}
 	}()
 
+	err = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	if err != nil {
+		log.Fatal("Error setting read deadline:", err)
+	}
+
 	reader := bufio.NewReader(conn)
+
 	ans, err := reader.ReadString('\n')
 
 	if err != nil {
