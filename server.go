@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -14,12 +18,14 @@ func handleConn(conn net.Conn, message string, wg *sync.WaitGroup) {
 
 	err := conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	if err != nil {
-		log.Fatal("Error setting write deadline:", err)
+		log.Println("Error setting write deadline:", err)
+		return
 	}
 
 	_, err = conn.Write([]byte(message))
 	if err != nil {
-		log.Fatal("Error writing to client:", err)
+		log.Println("Error writing to client:", err)
+		return
 	}
 }
 
@@ -35,14 +41,36 @@ func main() {
 		log.Fatal("Error starting server:", err)
 	}
 
-	defer listener.Close()
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+
+	defer stop()
 
 	fmt.Println("Server is listening on port 8080...")
+
+	go func() {
+
+		<-ctx.Done()
+
+		fmt.Println("\nShutting down server...")
+
+		if err := listener.Close(); err != nil {
+			log.Println("Error closing listener: ", err)
+		}
+
+	}()
 
 	for {
 		conn, err := listener.Accept()
 
 		if err != nil {
+			if ctx.Err() != nil {
+				break
+			}
+
 			fmt.Println("Error accepting connection:", err)
 			continue
 		}
@@ -50,4 +78,8 @@ func main() {
 		wg.Add(1)
 		go handleConn(conn, message, &wg)
 	}
+
+	wg.Wait()
+
+	fmt.Println("Server stopped")
 }
